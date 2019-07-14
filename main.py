@@ -5,11 +5,15 @@ import re
 quantity = 0
 regex = "(.*)_\d+_\d+_\d+_n.[jpg|mp4]"
 
+if os.path.exists("/Users/lucas/Desktop/instagram/.DS_Store"):
+    os.remove("/Users/lucas/Desktop/instagram/.DS_Store")
+
 for root, dirs, files in os.walk("/Users/lucas/Desktop/instagram"):
     for i, entry in enumerate(files):
         match = re.search(regex, entry)
         # Delete Mac OS X attributes file
         os.system("rm {0}/.DS_Store".format(root))
+        print entry, match
         user = match.group(1)
         dir_from = root + "/{}".format(entry)
         dir_to = root + "/{}".format(user)
