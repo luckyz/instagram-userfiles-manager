@@ -7,11 +7,13 @@ regex = "(.*)_\d+_\d+_\d+_n.[jpg|mp4]"
 
 errors = []
 
-if os.path.exists("/Users/lucas/Desktop/instagram/.DS_Store"):
-    os.remove("/Users/lucas/Desktop/instagram/.DS_Store")
-
 try:
-    for root, dirs, files in os.walk("/Users/lucas/Desktop/instagram"):
+    workdir = raw_input("> Please, enter the working directory: ")
+
+    if os.path.exists("{}/.DS_Store".format(workdir)):
+        os.remove("{}/.DS_Store".format(workdir))
+
+    for root, dirs, files in os.walk(workdir):
         for i, entry in enumerate(files):
             match = re.search(regex, entry)
             user = match.group(1)
@@ -29,7 +31,7 @@ except Exception as e:
 except FileExists:
     pass
 
-print """{0} files moved succesfully.""".format(quantity)
+print """{} files moved succesfully.""".format(quantity)
 if len(errors) > 0:
     print "\nErrors:"
     for i, error in enumerate(errors):
