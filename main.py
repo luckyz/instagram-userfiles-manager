@@ -4,7 +4,7 @@ import re
 from sys import argv
 
 quantity = 0
-regex = "(.*)_\d+_\d+_\d+_n.(jpg|png|mp4)"
+regex = "(.*)_\d+_\d+_\d+_n\.jpg|png|mp4"
 
 # Picture username recognition
 #flag = None
