@@ -4,9 +4,8 @@ import os
 import re
 import logging
 import shutil
-from sys import argv
+from sys import argv, exc_info
 
-quantity = 0
 regex = r"(.*)(\_\d+(\_n)?){3}\.(jpg|png|mp4)"
 unclassified_folder = "0_unclassified/"
 
@@ -21,16 +20,19 @@ class Organizer(object):
         os.chdir(self.dir)
 
     def get_dirs(self):
-        self.dirs = [dir for dir in os.listdir() if os.path.isdir(dir)]
+        self.dirs = [dir for dir in os.listdir(self.dir) if os.path.isdir(dir)]
         return self.dirs
 
     def get_files(self):
-        self.files = [file for file in os.listdir() if os.path.isfile(file)]
+        self.files = [file for file in os.listdir(self.dir) if os.path.isfile(file)]
 
         try:
             self.files.remove(".DS_Store")
         except Exception as e:
-            logging.info(e)
+            # TODO: ignore when ds_store file not exists
+            # logging.info(e)
+            # errors.append([exc_info()[-1].tb_lineno, e])
+            pass
         finally:
             return self.files
 
@@ -66,7 +68,7 @@ class Organizer(object):
                 shutil.move(r"{}/{}".format(self.dir, file), r"{}/{}".format(self.dir, username))
 
         except Exception as e:
-            print(errors.append(e))
+            print(errors.append([exc_info()[-1].tb_lineno, e]))
 
 
 def main():
@@ -76,17 +78,24 @@ def main():
     else:
         workdir = str(input(">> Please, enter the working directory: "))
 
-    obj = Organizer(workdir)
-    obj.organize()
+    try:
+        obj = Organizer(workdir)
+        obj.organize()
 
-    print("{} files moved succesfully.".format(quantity))
+        print("{} files moved succesfully.".format(obj.quantity))
 
-    if len(errors) > 0:
-        print("\nErrors:")
-        for i, error in enumerate(errors):
-            print("[{0}] - {1}".format(i, error))
+        input("\nPress [ENTER] to continue...")
+        
+    except Exception as e:
+        # TODO: ignore last input error
+        # errors.append([exc_info()[-1].tb_lineno, e])
+        pass
 
-    input("\nPress [ENTER] to continue...")
+    finally:
+        if len(errors) > 0:
+            print("\nErrors:")
+            for error in errors:
+                print("line {}: {}".format(error[0], error[1]))
 
 if __name__ == '__main__':
     main()
