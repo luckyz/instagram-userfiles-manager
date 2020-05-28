@@ -1,65 +1,92 @@
+# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 import os
-import shutil
 import re
+import logging
+import shutil
 from sys import argv
 
 quantity = 0
-regex = "(.*)_\d+_\d+_\d+_n\.jpg|png|mp4"
-
-# Picture username recognition
-#flag = None
-#count = 0
+regex = r"(.*)(\_\d+(\_n)?){3}\.(jpg|png|mp4)"
+unclassified_folder = "0_unclassified/"
 
 errors = []
 
-try:
+class Organizer(object):
+
+    def __init__(self, dir="."):
+        super(Organizer, self).__init__()
+        self.dir = os.path.abspath(os.path.expanduser(dir))
+        self.quantity = 0
+        os.chdir(self.dir)
+
+    def get_dirs(self):
+        self.dirs = [dir for dir in os.listdir() if os.path.isdir(dir)]
+        return self.dirs
+
+    def get_files(self):
+        self.files = [file for file in os.listdir() if os.path.isfile(file)]
+
+        try:
+            self.files.remove(".DS_Store")
+        except Exception as e:
+            logging.info(e)
+        finally:
+            return self.files
+
+    def get_username(self, entry):
+        match = re.search(regex, entry)
+        if not match is None:
+            return match.group(1)
+
+    def create_dir(self, username):
+        if not username in self.files:
+            return os.makedirs(r"{}/{}".format(self.dir, username))
+
+    def dir_exists(self, name):
+        return os.path.exists(r"{}/{}".format(self.dir, name))
+
+    def organize(self):
+        try:
+            self.get_files()
+            self.get_dirs()
+            for file in self.files:
+                username = self.get_username(file)
+                if not username is None:
+                    if not self.dir_exists(username):
+                        self.create_dir(username)
+                    self.quantity += 1
+
+
+                else:
+                    if not self.dir_exists(unclassified_folder):
+                        self.create_dir(unclassified_folder)
+                    username = unclassified_folder
+
+                shutil.move(r"{}/{}".format(self.dir, file), r"{}/{}".format(self.dir, username))
+
+        except Exception as e:
+            print(errors.append(e))
+
+
+def main():
     # Get commandline arguments
-    if argv[1] != None:
+    if len(argv) > 1:
         workdir = argv[1]
     else:
-        workdir = raw_input("> Please, enter the working directory: ")
+        workdir = str(input(">> Please, enter the working directory: "))
 
-    # Deletes MacOs file
-    if os.path.exists("{}/.DS_Store".format(workdir)):
-        os.remove("{}/.DS_Store".format(workdir))
+    obj = Organizer(workdir)
+    obj.organize()
 
-    # Explores subdirectories
-    for root, dirs, files in os.walk(workdir):
-        for i, entry in enumerate(files):
-            match = re.search(regex, entry)
-            # Detects username
-            user = match.group(1)
-            dir_from = root + "/{}".format(entry)
-            dir_to = root + "/{}".format(user)
+    print("{} files moved succesfully.".format(quantity))
 
-            # Moves picture to user dir
-            if user in dirs:
-                print entry, dirs
-            # Creates dir if not exist
-            else:
-                os.makedirs(dir_to)
-            os.system("mv {0} {1}".format(dir_from, dir_to))
-            quantity += 1
+    if len(errors) > 0:
+        print("\nErrors:")
+        for i, error in enumerate(errors):
+            print("[{0}] - {1}".format(i, error))
 
-            # # Picture username recognition
-            # while flag not in ("yes", "y", "no", "n"):
-            #     count =+ 1
-            #     if count == 1:
-            #         flag = raw_input("> Use picture username recognition? (default: [n]): ")
-            #     else:
-            #         flag = raw_input("> Sorry, you should answer 'yes' [y] or 'no [n]. Use picture username recognition? (default: [n]): ")
-            # if flag in ("yes", "y"):
-            #     os.system("python3.7 image2text/main.py -i {0}/{1} -o {0}".format(workdir, entry))
+    input("\nPress [ENTER] to continue...")
 
-except Exception as e:
-    errors.append(e)
-    pass
-except FileExists:
-    pass
-
-print """{} files moved succesfully.""".format(quantity)
-if len(errors) > 0:
-    print "\nErrors:"
-    for i, error in enumerate(errors):
-        print "[{0}] - {1}".format(i, error)
-raw_input("""\nPress [ENTER] to continue...""")
+if __name__ == '__main__':
+    main()
