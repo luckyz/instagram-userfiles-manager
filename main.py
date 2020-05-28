@@ -8,12 +8,12 @@ from sys import argv, exc_info
 
 regex = r"(.*)(\_\d+(\_n)?){3}\.(jpg|png|mp4)"
 unclassified_folder = "0_unclassified/"
-
+workdir = "."
 errors = []
 
 class Organizer(object):
 
-    def __init__(self, dir="."):
+    def __init__(self, dir=workdir):
         super(Organizer, self).__init__()
         self.dir = os.path.abspath(os.path.expanduser(dir))
         self.quantity = 0
@@ -72,20 +72,20 @@ class Organizer(object):
 
 
 def main():
-    # Get commandline arguments
-    if len(argv) > 1:
-        workdir = argv[1]
-    else:
-        workdir = str(input(">> Please, enter the working directory: "))
-
     try:
+        # Get commandline arguments
+        if len(argv) > 1:
+            workdir = argv[1]
+        else:
+            workdir = str(input(">> Please, enter the working directory: "))
+
         obj = Organizer(workdir)
         obj.organize()
 
         print("{} files moved succesfully.".format(obj.quantity))
 
         input("\nPress [ENTER] to continue...")
-        
+
     except Exception as e:
         # TODO: ignore last input error
         # errors.append([exc_info()[-1].tb_lineno, e])
