@@ -4,6 +4,7 @@ import os
 import re
 import logging
 import shutil
+from PIL import Image
 from sys import argv, exc_info
 
 regex = r"(.*)(\_\d+(\_n)?){3}\.(jpg|png|mp4)"
@@ -40,6 +41,29 @@ class Organizer(object):
         match = re.search(regex, entry)
         if not match is None:
             return match.group(1)
+
+    def open_image(self, entry):
+        dir = os.getcwd()
+        return Image.open("{}/{}".format(dir, entry))
+
+    def close_image(self, image):
+        return image.close()
+
+    def remove_image(self, image):
+        return os.remove("{}/crop.png".format(dir))
+
+    def crop_image(self, image):
+        return image.crop((70,30,300,60))
+
+    def convert_to_grayscale(self):
+        return image.convert('L')
+
+    def perform_image(self, image):
+        threshold = 170
+        return image.point(lambda p: p > threshold and 255)
+
+    def save_image(self, image):
+        return image.save("crop.png", "PNG")
 
     def create_dir(self, username):
         if not username in self.files:
