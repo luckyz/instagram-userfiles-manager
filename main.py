@@ -37,33 +37,10 @@ class Organizer(object):
         finally:
             return self.files
 
-    def get_username(self, entry):
-        match = re.search(regex, entry)
+    def get_username(self, file):
+        match = re.search(regex, file)
         if not match is None:
             return match.group(1)
-
-    def open_image(self, entry):
-        dir = os.getcwd()
-        return Image.open("{}/{}".format(dir, entry))
-
-    def close_image(self, image):
-        return image.close()
-
-    def remove_image(self, image):
-        return os.remove("{}/crop.png".format(dir))
-
-    def crop_image(self, image):
-        return image.crop((70,30,300,60))
-
-    def convert_to_grayscale(self):
-        return image.convert('L')
-
-    def perform_image(self, image):
-        threshold = 170
-        return image.point(lambda p: p > threshold and 255)
-
-    def save_image(self, image):
-        return image.save("crop.png", "PNG")
 
     def create_dir(self, username):
         if not username in self.files:
@@ -72,8 +49,25 @@ class Organizer(object):
     def dir_exists(self, name):
         return os.path.exists(r"{}/{}".format(self.dir, name))
 
+    def picture_recognition(self, file, threshold=190, lang="eng"):
+        path = os.path.dirname(file)
+        os.chdir(path)
+        image = Image.open(file)
+        image = image.crop((80,40,350,70))
+        image = image.convert('L')
+        image = image.point(lambda p: p > threshold and 255)
+        image.save("{}/crop.png".format(os.getcwd()), dpi=(500, 500))
+        os.system("tesseract {}/{}.png crop -l {}".format(os.getcwd(), "crop", lang))
+        text = os.system("cat {}/crop.txt".format(os.getcwd()))
+        image.close()
+        os.remove("{}/crop.png".format(path))
+        os.remove("{}/crop.txt".format(path))
+
+        return text
+
     def organize(self):
         try:
+            # Images with any pattern
             self.get_files()
             self.get_dirs()
             for file in self.files:
@@ -83,11 +77,12 @@ class Organizer(object):
                         self.create_dir(username)
                     self.quantity += 1
 
-
+                # Images without pattern
                 else:
                     if not self.dir_exists(unclassified_folder):
                         self.create_dir(unclassified_folder)
                     username = unclassified_folder
+                    self.picture_recognition(file)
 
                 shutil.move(r"{}/{}".format(self.dir, file), r"{}/{}".format(self.dir, username))
 
