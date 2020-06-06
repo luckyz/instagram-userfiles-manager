@@ -8,6 +8,7 @@ from PIL import Image
 from sys import argv, exc_info
 
 regex = r"(.*)(\_\d+(\_n)?){3}\.(jpg|png|mp4)"
+time_regex = r"(\w*)\s\w*"
 unclassified_folder = "0_unclassified/"
 workdir = "."
 errors = []
@@ -58,10 +59,13 @@ class Organizer(object):
         image = image.point(lambda p: p > threshold and 255)
         image.save("{}/crop.png".format(os.getcwd()), dpi=(500, 500))
         os.system("tesseract {}/{}.png crop -l {}".format(os.getcwd(), "crop", lang))
-        text = os.system("cat {}/crop.txt".format(os.getcwd()))
+        text = open("{}/crop.txt".format(os.getcwd()), "r").read()
         image.close()
         os.remove("{}/crop.png".format(path))
         os.remove("{}/crop.txt".format(path))
+        match = re.search(time_regex, text)
+        if not match is None:
+            text = match.group(1)
 
         return text
 
