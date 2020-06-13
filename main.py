@@ -5,6 +5,7 @@ import re
 import logging
 import shutil
 from PIL import Image
+from moviepy.editor import VideoFileClip
 from sys import argv, exc_info
 
 regex = r"(.*)(\_\d+(\_n)?){3}\.(jpg|png|mp4)"
@@ -69,9 +70,18 @@ class Organizer(object):
 
         return text
 
+    def video_capture(self, file):
+        picture = VideoFileClip(file)
+        filename = os.path.basename(picture.filename)
+        frame_filename = filename.split(".")[0] + ".jpg"
+        picture.save_frame(frame_filename, 0)
+        temp_frame = Image.open(frame_filename)
+
+        return temp_frame
+
     def organize(self):
         try:
-            # Images with any pattern
+            # Media with any pattern
             self.get_files()
             self.get_dirs()
             for file in self.files:
@@ -81,12 +91,17 @@ class Organizer(object):
                         self.create_dir(username)
                     self.quantity += 1
 
-                # Images without pattern
+                # Media without pattern
                 else:
                     if not self.dir_exists(unclassified_folder):
                         self.create_dir(unclassified_folder)
                     username = unclassified_folder
-                    self.picture_recognition(file)
+                    filename_without_ext, ext = os.path.basename(file).split(".")
+                    if ext == "mp4":
+                        temp_frame = self.video_capture(file)
+                        self.picture_recognition(temp_frame)
+                    else:
+                        self.picture_recognition(file)
 
                 shutil.move(r"{}/{}".format(self.dir, file), r"{}/{}".format(self.dir, username))
 
@@ -101,7 +116,7 @@ def main():
             workdir = argv[1]
         else:
             workdir = str(input(">> Please, enter the working directory: "))
-
+            workdir = os.path.abspath(os.path.expanduser(workdir))
         obj = Organizer(workdir)
         obj.organize()
 
