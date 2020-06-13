@@ -70,11 +70,11 @@ class Organizer(object):
 
         return text
 
-    def video_capture(self, file):
+    def video_capture(self, file, frame=10):
         picture = VideoFileClip(file)
         filename = os.path.basename(picture.filename)
         frame_filename = filename.split(".")[0] + ".jpg"
-        picture.save_frame(frame_filename, 0)
+        picture.save_frame(frame_filename, frame)
         temp_frame = Image.open(frame_filename)
 
         return temp_frame
