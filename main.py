@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python3
 import os
+import subprocess
 import re
 import logging
 import shutil
@@ -14,8 +15,9 @@ unclassified_folder = "0_unclassified/"
 workdir = "."
 errors = []
 
-class Organizer(object):
+BOX = (80, 40, 350, 70)
 
+class Organizer(object):
     def __init__(self, dir=workdir):
         super(Organizer, self).__init__()
         self.dir = os.path.abspath(os.path.expanduser(dir))
@@ -52,14 +54,16 @@ class Organizer(object):
         return os.path.exists(r"{}/{}".format(self.dir, name))
 
     def picture_recognition(self, file, threshold=190, lang="eng"):
-        path = os.path.dirname(file)
+        path = os.path.dirname("{}/{}".format(os.getcwd(), file))
         os.chdir(path)
         image = Image.open(file)
-        image = image.crop((80,40,350,70))
+        image = image.crop(BOX)
         image = image.convert('L')
         image = image.point(lambda p: p > threshold and 255)
         image.save("{}/crop.png".format(os.getcwd()), dpi=(500, 500))
-        os.system("tesseract {}/{}.png crop -l {}".format(os.getcwd(), "crop", lang))
+        FNULL = open(os.devnull, "w")
+        command = subprocess.call(["tesseract", "{}/{}.png".format(os.getcwd(), "crop"), "crop", "-l", "{}".format(lang)], stdout=FNULL, stderr=subprocess.STDOUT)
+        # os.system("tesseract {}/{}.png crop -l {}".format(os.getcwd(), "crop", lang))
         text = open("{}/crop.txt".format(os.getcwd()), "r").read()
         image.close()
         os.remove("{}/crop.png".format(path))
@@ -73,11 +77,11 @@ class Organizer(object):
     def video_capture(self, file, frame=10):
         picture = VideoFileClip(file)
         filename = os.path.basename(picture.filename)
-        frame_filename = filename.split(".")[0] + ".jpg"
-        picture.save_frame(frame_filename, frame)
-        temp_frame = Image.open(frame_filename)
+        frame_filename = filename.split(".")[0] + ".png"
+        picture.save_frame("crop.png", frame)
+        # temp_frame = Image.open(frame_filename)
 
-        return temp_frame
+        return "crop.png"
 
     def organize(self):
         try:
@@ -89,7 +93,6 @@ class Organizer(object):
                 if not username is None:
                     if not self.dir_exists(username):
                         self.create_dir(username)
-                    self.quantity += 1
 
                 # Media without pattern
                 else:
@@ -102,6 +105,8 @@ class Organizer(object):
                         self.picture_recognition(temp_frame)
                     else:
                         self.picture_recognition(file)
+
+                self.quantity += 1
 
                 shutil.move(r"{}/{}".format(self.dir, file), r"{}/{}".format(self.dir, username))
 
@@ -120,7 +125,7 @@ def main():
         obj = Organizer(workdir)
         obj.organize()
 
-        print("{} files moved succesfully.".format(obj.quantity))
+        print("\n{} files moved succesfully.".format(obj.quantity))
 
         input("\nPress [ENTER] to continue...")
 
